@@ -7,18 +7,16 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 
+
 public class FindTest {
-
-
     private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-
+    private Find find;
 
     @Before
     public void setUpStream() {
         System.setOut(new PrintStream(outContent));
+        find = new Find();
     }
-
-
 
     @After
     public void cleanUpStream() {
@@ -34,7 +32,7 @@ public class FindTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Find.main(fileName.split(" "));
+        find.find(fileName.split(" "));
         file.delete();
         String[] allFiles = outContent.toString().split("\r\n");
         for (String s : allFiles) {
@@ -68,7 +66,7 @@ public class FindTest {
             e.printStackTrace();
         }
         //включаем рекурсию
-        Find.main(("-r " + fileName).split(" "));
+        find.find(("-r " + fileName).split(" "));
         file.delete();
         dir.delete();
         String[] allFiles = outContent.toString().split("\r\n");
@@ -97,7 +95,9 @@ public class FindTest {
             e.printStackTrace();
         }
         //найти все файлы
-        Find.main(".*".split(" "));
+        find.find(fileName1.split(" "));
+        find.find(fileName2.split(" "));
+        find.find(fileName3.split(" "));
         file1.delete();
         file2.delete();
         file3.delete();
@@ -130,8 +130,52 @@ public class FindTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Find.main(("-d ." + File.separator + "a " + fileName).split(" "));
+        find.find(("-d ." + File.separator + "a " + fileName).split(" "));
         file.delete();
+        dir.delete();
+        String[] allFiles = outContent.toString().split("\r\n");
+        for (String s : allFiles) {
+            if (s.matches(".*" + fileName + "$")) {
+                assert true;
+                return;
+            }
+        }
+        assert false;
+    }
+
+    @Test
+    public void findCreatedFileWithSplittedKeys() {
+        String fileName = "asdlkjiluh";
+        File file = new File("a" + File.separator + "b" + File.separator + fileName);
+        File dir1 = new File("." + File.separator + "a");
+        File dir2 = new File("." + File.separator + "a" + File.separator + "b");
+        dir1.mkdir();
+        dir2.mkdir();
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        find.find(("-d -r ." + File.separator + "a " + fileName).split(" "));
+        file.delete();
+        dir2.delete();
+        dir1.delete();
+        String[] allFiles = outContent.toString().split("\r\n");
+        for (String s : allFiles) {
+            if (s.matches(".*" + fileName + "$")) {
+                assert true;
+                return;
+            }
+        }
+        assert false;
+    }
+
+    @Test
+    public void findDirectory() {
+        String fileName = "asdlkjiluh";
+        File dir = new File("." + File.separator + fileName);
+        dir.mkdir();
+        find.find(fileName.split(" "));
         dir.delete();
         String[] allFiles = outContent.toString().split("\r\n");
         for (String s : allFiles) {

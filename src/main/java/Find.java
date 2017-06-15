@@ -1,48 +1,64 @@
 import java.io.File;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.ListIterator;
 
 public class Find {
-    private static boolean isRecursive;
-    private static File dir;
-    private static String regexp;
-    public static void main(String[] args) {
+    private boolean isRecursive;
+    private File dir;
+    private String toFind;
+
+    public void find(String[] args) {
         parseArgs(args);
         findFile(dir);
     }
 
     //функция, которую вызовем рекурсивно в том случае, если попадется директория, а не файл
-    private static void findFile(File directory) {
-        for(File file : directory.listFiles()) {
+    private void findFile(File directory) {
+        for (File file : directory.listFiles()) {
             if (file.isDirectory()) {
                 //если был -r, то вызываем эту же функцию с найденной директорией
                 if (isRecursive) {
                     findFile(file);
                 }
-            } else {
-                /*
-                Функция matches() проверяет, удовлетворяет ли заданная строка регулярному выражению,
-                переданному в скобках.
-                 */
-                if (file.getName().matches(regexp)) {
-                    System.out.println(file.getAbsolutePath());
-                }
+            }
+            if (file.getName().equals(toFind)) {
+                System.out.println(file.getAbsolutePath());
             }
         }
     }
 
-    private static void parseArgs(String[] args) {
+    private void parseArgs(String[] args) {
         if (args.length == 0) {
             System.out.println("Incorrect input.");
             System.exit(0);
         }
 
         /*
-        обычно все ключи указываются сразу. Поэтому возможны варианты:
+         возможны варианты:
             либо без ключа;
             либо ключ -r;
             либо ключ -d;
             либо ключ -rd;
             либо -dr;
          */
+        LinkedList<String> list = new LinkedList<String>(Arrays.asList(args));
+        StringBuilder keys = new StringBuilder("-");
+        ListIterator<String> iterator = list.listIterator();
+        while (iterator.hasNext()) {
+            String s = iterator.next();
+            if (s.matches("-.*")) {
+                keys.append(s.subSequence(1, s.length()));
+                iterator.remove();
+            }
+        }
+        if (!keys.toString().equals("-")) {
+            list.addFirst(keys.toString());
+        }
+        //Чтобы метод toArray вернул массив каких-то объектов, надо ему в параметрах передать инстанс массива
+        //этих же объектов. В противном случае вернет Object[].
+        args = list.toArray(new String[0]);
+
         if (args[0].matches("-.*")) {
             if (args[0].contains("r")) {
                 isRecursive = true;
@@ -57,7 +73,7 @@ public class Find {
                         System.out.println(args[1] + " is not directory");
                         System.exit(0);
                     }
-                    regexp = args[2];
+                    toFind = args[2];
                 }
             } else {
                 if (args.length != 2) {
@@ -66,7 +82,7 @@ public class Find {
                 } else {
                     //точка - текущая директория
                     dir = new File(".");
-                    regexp = args[1];
+                    toFind = args[1];
                 }
             }
         } else {
@@ -75,7 +91,7 @@ public class Find {
                 System.exit(0);
             } else {
                 dir = new File(".");
-                regexp = args[0];
+                toFind = args[0];
             }
         }
     }
